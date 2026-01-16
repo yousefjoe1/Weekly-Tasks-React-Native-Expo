@@ -1,21 +1,21 @@
-import LoginForm from '@/components/common/LoginForm';
+import { useAuth } from '@/contexts/Auth';
 import { supabase } from '@/db/supabase';
 import useTasksStore from '@/store/tasksStore';
-import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useEffect } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 
 export default function HomeScreen() {
 
+  const { user } = useAuth()
+
   const tasks = useTasksStore((state) => state.tasks)
   const setTasks = useTasksStore((state) => state.setTasks)
-  const [isLoginVisible, setIsLoginVisible] = useState(false);
 
   useEffect(() => {
     const fetchTasks = async () => {
-      const { data, error } = await supabase.from('weekly_tasks').select('*')
-      console.log("🚀 ~ fetchTasks ~ data:", data)
+      const { data, error } = await supabase.from('weekly_tasks').select('*').eq('userId', user?.id)
       if (error) {
         console.error('Error fetching tasks:', error)
       } else {
@@ -23,22 +23,12 @@ export default function HomeScreen() {
       }
     }
     fetchTasks()
-  }, [setTasks])
+  }, [setTasks, user?.id])
 
 
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header with Login Button */}
-      <View style={styles.header}>
-        <Text style={styles.title}>My Tasks</Text>
-        <TouchableOpacity
-          onPress={() => setIsLoginVisible(true)}
-          style={styles.loginButton}
-        >
-          <Text style={styles.loginButtonText}>Login</Text>
-        </TouchableOpacity>
-      </View>
 
       {/* Task List Logic */}
       <View style={styles.content}>
@@ -51,27 +41,7 @@ export default function HomeScreen() {
         )}
       </View>
 
-      {/* Login Form Overlay */}
-      {isLoginVisible && (
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            {/* Close Button */}
-            <TouchableOpacity
-              onPress={() => setIsLoginVisible(false)}
-              style={styles.closeButton}
-            >
-              <Text style={styles.closeButtonText}>✕ Close</Text>
-            </TouchableOpacity>
 
-            <ScrollView
-              contentContainerStyle={{ flexGrow: 1 }}
-              style={{ borderRadius: 24, backgroundColor: '#fff' }}
-            >
-              <LoginForm />
-            </ScrollView>
-          </View>
-        </View>
-      )}
     </SafeAreaView>
   );
 }
