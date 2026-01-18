@@ -5,21 +5,24 @@ import { useCallback, useEffect } from "react";
 // import { WeeklyTasksSync } from "@/services/weeklyTasksSyncService";
 import { useAuth } from "@/contexts/Auth";
 import useTasksStore from "@/store/tasksStore";
+import { WeeklyTasksService } from "../services/weeklyTasksService";
+import { WeeklyTasksSync } from "../services/weeklyTasksSyncService";
 
 
 export function useWeeklyTasks() {
 
-  const { setTasks, updateTask, removeTask } = useTasksStore()
+  const { setTasks, updateTask, removeTask, setLoading } = useTasksStore()
 
 
   const { user } = useAuth();
 
 
   const getTasks = useCallback(async () => {
-    // dispatch(setLoading(true))
+    setLoading(true)
     const tasks = await WeeklyTasksService.fetchTasks(user?.id)
-    // dispatch(setTasks(tasks))
-  }, [user, dispatch])
+    setTasks(tasks)
+    setLoading(false)
+  }, [user])
 
 
   const updateBlock = async (taskId: string, updates: Partial<WeeklyTask>) => {
@@ -27,8 +30,9 @@ export function useWeeklyTasks() {
     // dispatch(setError({ id: taskId, message: null }));
     // dispatch(setLoading(true))
     try {
+      setLoading(true)
       await WeeklyTasksService.updateTask(taskId, updates, user?.id);
-      // dispatch(updateTask({ id: taskId, updates }));
+      updateTask(taskId, updates);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Update failed';
       // dispatch(setError({ id: taskId, message }));
@@ -36,10 +40,9 @@ export function useWeeklyTasks() {
   };
 
   const deleteBlock = async (taskId: string) => {
-    // dispatch(setLoading(true))
     try {
       await WeeklyTasksService.deleteTask(taskId, user?.id)
-      // dispatch(removeTask(taskId))
+      removeTask(taskId)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to delete task'
       // dispatch(setError({ id: taskId, message }))

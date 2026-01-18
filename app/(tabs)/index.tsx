@@ -1,43 +1,36 @@
-import { useAuth } from '@/contexts/Auth';
-import { supabase } from '@/db/supabase';
+import { AddBlock } from '@/featuers/weeklyTasks/components/AddTask';
+import TaskItem from '@/featuers/weeklyTasks/components/TaskItem';
+import { useWeeklyTasks } from '@/featuers/weeklyTasks/hooks/useWeeklyTasks';
 import useTasksStore from '@/store/tasksStore';
-import { useEffect } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { WeeklyTask } from '@/types';
+import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 
 export default function HomeScreen() {
-
-  const { user } = useAuth()
+  const { updateBlock, deleteBlock } = useWeeklyTasks();
+  const { loading } = useTasksStore();
 
   const tasks = useTasksStore((state) => state.tasks)
-  const setTasks = useTasksStore((state) => state.setTasks)
-
-  useEffect(() => {
-    const fetchTasks = async () => {
-      const { data, error } = await supabase.from('weekly_tasks').select('*').eq('userId', user?.id)
-      if (error) {
-        console.error('Error fetching tasks:', error)
-      } else {
-        setTasks(data)
-      }
-    }
-    fetchTasks()
-  }, [setTasks, user?.id])
 
 
 
   return (
     <SafeAreaView style={styles.container}>
-
+      <AddBlock />
       {/* Task List Logic */}
       <View style={styles.content}>
+        {loading && <ActivityIndicator size="small" color="#3b82f6" />}
         {tasks.length === 0 ? (
           <Text style={styles.emptyText}>No tasks found</Text>
         ) : (
-          tasks.map((task: any) => (
-            <Text key={task.id} style={styles.taskItem}>{task.content}</Text>
-          ))
+          <FlatList
+            data={tasks}
+            keyExtractor={(item: WeeklyTask) => item.id.toString()}
+            renderItem={({ item }) => (
+              <TaskItem onDelete={deleteBlock} onUpdate={updateBlock} item={item} />
+            )}
+          />
         )}
       </View>
 
@@ -51,63 +44,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  loginButton: {
-    backgroundColor: '#3b82f6',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  loginButtonText: {
-    color: 'white',
-    fontWeight: '600',
-  },
   content: {
     padding: 20,
+    height: '70%'
   },
   emptyText: {
     color: '#666',
     textAlign: 'center',
     marginTop: 20,
   },
-  taskItem: {
-    padding: 15,
-    backgroundColor: '#f9f9f9',
-    marginBottom: 10,
-    borderRadius: 8,
-  },
-  /* Modal Styling */
-  modalOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-  },
-  modalContainer: {
-    width: '90%',
-    maxHeight: '80%',
-  },
-  closeButton: {
-    alignSelf: 'flex-end',
-    marginBottom: 10,
-    backgroundColor: '#fff',
-    padding: 8,
-    borderRadius: 20,
-  },
-  closeButtonText: {
-    fontWeight: 'bold',
-    color: '#333',
-  }
 });

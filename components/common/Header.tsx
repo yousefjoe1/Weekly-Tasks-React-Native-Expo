@@ -1,6 +1,6 @@
 import { useAuth } from '@/contexts/Auth';
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import LoginForm from './LoginForm';
 
@@ -31,24 +31,24 @@ const Header = () => {
             }
             {/* Login Form Overlay */}
             {isLoginVisible && (
-                <View style={styles.modalOverlay}>
+                <Modal animationType="slide" transparent={true} visible={isLoginVisible}>
                     <View style={styles.modalContainer}>
                         {/* Close Button */}
-                        <TouchableOpacity
-                            onPress={() => setIsLoginVisible(false)}
-                            style={styles.closeButton}
-                        >
-                            <Text style={styles.closeButtonText}>✕ Close</Text>
-                        </TouchableOpacity>
 
                         <ScrollView
                             contentContainerStyle={{ flexGrow: 1 }}
-                            style={{ borderRadius: 24, backgroundColor: '#fff' }}
+                            style={{ borderRadius: 24, backgroundColor: '#fff', width: '100%' }}
                         >
+                            <TouchableOpacity
+                                onPress={() => setIsLoginVisible(false)}
+                                style={styles.closeButton}
+                            >
+                                <Text>✕ Close</Text>
+                            </TouchableOpacity>
                             <LoginForm />
                         </ScrollView>
                     </View>
-                </View>
+                </Modal>
             )}
         </SafeAreaView>
     )
@@ -103,18 +103,23 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0,0,0,0.5)',
         justifyContent: 'center',
         alignItems: 'center',
-        zIndex: 1000,
+        zIndex: 2000,
     },
     modalContainer: {
-        width: '90%',
-        maxHeight: '80%',
+        // width: '90%',
+        // maxHeight: '80%',
     },
     closeButton: {
         alignSelf: 'flex-end',
-        marginBottom: 10,
-        backgroundColor: '#fff',
+        // marginBottom: 10,
+        backgroundColor: '#c6c6c6ff',
         padding: 8,
         borderRadius: 20,
+        width: '100%',
+        justifyContent: 'center',
+        flexDirection: 'row',
+        height: 40,
+        marginTop: 20
     },
     closeButtonText: {
         fontWeight: 'bold',

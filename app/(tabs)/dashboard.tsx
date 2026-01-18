@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native'
 const dashboard = () => {
     return (
         <View>
-            <Text>dashboard</Text>
+            <Text style={{ fontSize: 25 }} >Under development</Text>
         </View>
     )
 }

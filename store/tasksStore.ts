@@ -4,17 +4,23 @@ import { create } from 'zustand';
 // 1. تعريف شكل الـ Store (State + Actions)
 interface TasksState {
     tasks: WeeklyTask[];
+    loading: boolean;
     setTasks: (tasks: WeeklyTask[]) => void;
     addTask: (task: WeeklyTask) => void;
-    removeTask: (task: WeeklyTask) => void;
-    updateTask: (task: WeeklyTask) => void;
+    removeTask: (task: string) => void;
+    updateTask: (id: string, updates: Partial<WeeklyTask>) => void;
+    setLoading: (loading: boolean) => void;
 }
 
 // 2. تمرير الـ Interface كـ Generic للـ create function
 const useTasksStore = create<TasksState>((set) => ({
     tasks: [],
+    loading: false,
 
-    setTasks: (tasks) => set((state) => ({
+    setLoading: (value) => set(() => ({
+        loading: value
+    })),
+    setTasks: (tasks: WeeklyTask[]) => set((state) => ({
         tasks: state.tasks = tasks
     })),
 
@@ -23,14 +29,19 @@ const useTasksStore = create<TasksState>((set) => ({
             tasks: [...state.tasks, task]
         })),
 
-    removeTask: (task) =>
+    removeTask: (taskId) =>
         set((state) => ({
-            tasks: state.tasks.filter((t) => t.id !== task.id)
+            tasks: state.tasks.filter((t) => t.id !== taskId)
         })),
 
-    updateTask: (task) =>
+    updateTask: (id: string, updates: Partial<WeeklyTask>) =>
         set((state) => ({
-            tasks: state.tasks.map((t) => t.id === task.id ? task : t)
+            tasks: state.tasks.map((t) =>
+                t.id === id
+                    ? { ...t, ...updates }
+                    : t
+            ),
+            loading: false
         })),
 }))
 

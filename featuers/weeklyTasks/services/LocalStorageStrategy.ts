@@ -1,47 +1,56 @@
-// lib/storage/StorageService.ts
 import { WeeklySnapshot, WeeklyTask } from "@/types";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const STORAGE_KEY = 'my-notion-app-data';
 const SNAPSHOT_KEY = 'my-notion-app-snapshots';
 
 export class LocalStorageStrategy {
-  private static getData(): WeeklyTask[] {
 
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : []
+  // Helper to get raw data
+  private static async getData(): Promise<WeeklyTask[]> {
+    try {
+      const data = await AsyncStorage.getItem(STORAGE_KEY);
+      return data ? JSON.parse(data) : [];
+    } catch (error) {
+      console.error("Error reading tasks:", error);
+      return [];
+    }
   }
 
-  private static saveData(data: WeeklyTask[]): void {
-    if (typeof window === 'undefined') return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  // Helper to save raw data
+  private static async saveData(data: WeeklyTask[]): Promise<void> {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch (error) {
+      console.error("Error saving tasks:", error);
+    }
   }
 
-  static getSnapshotData(): WeeklySnapshot[] {
-    const data = localStorage.getItem(SNAPSHOT_KEY);
-    return data ? JSON.parse(data) : {} as WeeklySnapshot[]
+  static async getSnapshotData(): Promise<WeeklySnapshot[]> {
+    try {
+      const data = await AsyncStorage.getItem(SNAPSHOT_KEY);
+      return data ? JSON.parse(data) : [];
+    } catch (error) {
+      return [];
+    }
   }
 
-  static getWeeklyTasks(): WeeklyTask[] {
-    const data = this.getData();
-    return data;
+  static async getWeeklyTasks(): Promise<WeeklyTask[]> {
+    return await this.getData();
   }
 
-
-  // save all tasks
-  static saveAllData(data: WeeklyTask[]): void {
-    if (typeof window === 'undefined') return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  static async saveAllData(data: WeeklyTask[]): Promise<void> {
+    await this.saveData(data);
   }
 
-
-  static addBlock(block: WeeklyTask): void {
-    const data = this.getData();
+  static async addBlock(block: WeeklyTask): Promise<void> {
+    const data = await this.getData();
     data.push(block);
-    this.saveData(data);
+    await this.saveData(data);
   }
 
-  static updateBlock(blockId: string, updates: Partial<WeeklyTask>): void {
-    const data = this.getData();
+  static async updateBlock(blockId: string, updates: Partial<WeeklyTask>): Promise<void> {
+    const data = await this.getData();
     const blockIndex = data.findIndex(b => b.id === blockId);
 
     if (blockIndex !== -1) {
@@ -49,14 +58,12 @@ export class LocalStorageStrategy {
         ...data[blockIndex],
         ...updates,
       };
-      this.saveData(data);
+      await this.saveData(data);
     }
   }
 
-  // saveWeeklySnapshot
-  static saveWeeklySnapshot(userId: string | undefined): void {
-    if (typeof window === 'undefined') return;
-    const tasks = this.getData()
+  static async saveWeeklySnapshot(userId: string | undefined): Promise<void> {
+    const tasks = await this.getData();
     const snapshotData = tasks.map(block => ({
       id: block.id,
       content: block.content,
@@ -67,19 +74,22 @@ export class LocalStorageStrategy {
       userId: userId,
       archived_at: new Date().toISOString(),
       week_data: snapshotData
+    };
+
+    try {
+      await AsyncStorage.setItem(SNAPSHOT_KEY, JSON.stringify(snapshot));
+    } catch (error) {
+      console.error("Error saving snapshot:", error);
     }
-
-    localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(snapshot));
   }
 
-  static clearTasks(): void {
-    const data = this.getData();
-    this.saveData(data);
+  static async clearTasks(): Promise<void> {
+    await AsyncStorage.removeItem(STORAGE_KEY);
   }
 
-  static deleteBlock(blockId: string): void {
-    const data = this.getData();
-    const newData = data.filter(b => b.id != blockId);
-    this.saveData(newData);
+  static async deleteBlock(blockId: string): Promise<void> {
+    const data = await this.getData();
+    const newData = data.filter(b => b.id !== blockId);
+    await this.saveData(newData);
   }
 }

@@ -1,6 +1,7 @@
 // services/weeklyTasksService.ts
 import { supabase } from '@/db/supabase';
 import { WeeklyTask } from '@/types';
+import { ApiErrorMessage } from '../types/taskTypes';
 import { shouldResetWeek } from '../utils/utils';
 import { LocalStorageStrategy } from './LocalStorageStrategy';
 
@@ -58,11 +59,11 @@ export class WeeklyTasksService {
             if (error) throw error
 
             // Sync to localStorage as backup
-            LocalStorageStrategy.addBlock(data)
+            await LocalStorageStrategy.addBlock(data)
 
             return data
         } else {
-            LocalStorageStrategy.addBlock(task)
+            await LocalStorageStrategy.addBlock(task)
             return task
         }
     }
@@ -78,7 +79,7 @@ export class WeeklyTasksService {
                 .from('weekly_tasks')
                 .update(updates)
                 .eq('id', taskId)
-                .eq('userId', userId)
+                .eq('userId', 9)
 
             if (error) throw error
         }
@@ -88,7 +89,7 @@ export class WeeklyTasksService {
     }
 
     // Delete task
-    static async deleteTask(taskId: string, userId: string | undefined): Promise<void> {
+    static async deleteTask(taskId: string, userId: string | undefined): Promise<ApiErrorMessage<void>> {
         if (userId) {
             const { error } = await supabase
                 .from('weekly_tasks')
@@ -96,10 +97,11 @@ export class WeeklyTasksService {
                 .eq('id', taskId)
                 .eq('userId', userId)
 
-            if (error) throw error
+            if (error) return { message: 'Error Deleting Task', code: 400, error }
         }
 
         LocalStorageStrategy.deleteBlock(taskId)
+        return { message: 'Task Deleted', code: 200 }
     }
 
     static async saveSnapShot(userId: string | undefined): Promise<void> {
