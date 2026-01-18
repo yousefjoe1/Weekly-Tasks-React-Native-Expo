@@ -5,20 +5,26 @@ import { create } from 'zustand';
 interface TasksState {
     tasks: WeeklyTask[];
     loading: boolean;
+    loadingSync: boolean;
     setTasks: (tasks: WeeklyTask[]) => void;
     addTask: (task: WeeklyTask) => void;
     removeTask: (task: string) => void;
     updateTask: (id: string, updates: Partial<WeeklyTask>) => void;
     setLoading: (loading: boolean) => void;
+    setLoadingSync: (loadingSync: boolean) => void;
 }
 
 // 2. تمرير الـ Interface كـ Generic للـ create function
 const useTasksStore = create<TasksState>((set) => ({
     tasks: [],
     loading: false,
+    loadingSync: false,
 
     setLoading: (value) => set(() => ({
         loading: value
+    })),
+    setLoadingSync: (value) => set(() => ({
+        loadingSync: value
     })),
     setTasks: (tasks: WeeklyTask[]) => set((state) => ({
         tasks: state.tasks = tasks

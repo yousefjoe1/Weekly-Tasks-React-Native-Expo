@@ -5,6 +5,7 @@ import 'react-native-reanimated';
 
 import Header from '@/components/common/Header';
 import { AuthProvider } from '@/contexts/Auth';
+import { NotificationProvider } from '@/featuers/Notifications/NotificationProvider';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export const unstable_settings = {
@@ -18,6 +19,12 @@ export default function RootLayout() {
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <AuthProvider>
         <Header />
+        {/* <GestureHandlerRootView> */}
+
+        {/* Renders on top of everything */}
+        <NotificationProvider />
+        {/* </GestureHandlerRootView> */}
+
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         </Stack>

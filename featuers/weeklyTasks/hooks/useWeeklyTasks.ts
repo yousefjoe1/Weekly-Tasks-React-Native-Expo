@@ -7,11 +7,13 @@ import { useAuth } from "@/contexts/Auth";
 import useTasksStore from "@/store/tasksStore";
 import { WeeklyTasksService } from "../services/weeklyTasksService";
 import { WeeklyTasksSync } from "../services/weeklyTasksSyncService";
+import { useNotificationStore } from "../store/useNotificationStore";
 
 
 export function useWeeklyTasks() {
 
-  const { setTasks, updateTask, removeTask, setLoading } = useTasksStore()
+  const { setTasks, updateTask, removeTask, setLoading, setLoadingSync } = useTasksStore()
+  const notify = useNotificationStore(state => state.notify);
 
 
   const { user } = useAuth();
@@ -31,11 +33,18 @@ export function useWeeklyTasks() {
     // dispatch(setLoading(true))
     try {
       setLoading(true)
-      await WeeklyTasksService.updateTask(taskId, updates, user?.id);
-      updateTask(taskId, updates);
+      const result = await WeeklyTasksService.updateTask(taskId, updates, user?.id);
+      if (result.success) {
+        notify('Task updated successfully', 'success');
+        updateTask(taskId, updates);
+      } else {
+        notify(result.error, 'error');
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Update failed';
-      // dispatch(setError({ id: taskId, message }));
+      notify(message, 'error');
+    } finally {
+      setLoading(false)
     }
   };
 
@@ -50,12 +59,15 @@ export function useWeeklyTasks() {
   }
 
   const SyncFromLocalToCloud = async () => {
-    // dispatch(setSyncLoading(true))
+    // const isSynced = await WeeklyTasksSync.handleSyncedOnce()
+
     if (user?.id) {
+      setLoadingSync(true)
       await WeeklyTasksSync.addTheNewTasks(user?.id)
       await WeeklyTasksSync.updateExistingTasks(user?.id)
       await WeeklyTasksSync.deleteMissingTasks(user?.id)
       await WeeklyTasksService.saveSnapShot(user?.id)
+      setLoadingSync(false)
     }
     getTasks()
     // dispatch(setSyncLoading(false))

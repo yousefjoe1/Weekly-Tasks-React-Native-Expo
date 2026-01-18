@@ -1,7 +1,9 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LocalStorageStrategy } from "./LocalStorageStrategy";
 import { WeeklyTasksService } from "./weeklyTasksService";
 
 
+const SYNCED_ONCE = 'synced_once'
 
 export class WeeklyTasksSync {
     // Change this in your WeeklyTasksSync class:
@@ -50,6 +52,36 @@ export class WeeklyTasksSync {
 
         for (const task of missingTasks) {
             await WeeklyTasksService.deleteTask(task.id, userId)
+        }
+
+    }
+
+    static async handleSyncedOnce() {
+        try {
+            const syncedValue = await AsyncStorage.getItem(SYNCED_ONCE);
+            if (syncedValue === undefined) {
+                await AsyncStorage.setItem(SYNCED_ONCE, 'synced');
+                return 'synced';
+            }
+            if (syncedValue === 'synced') {
+                return 'synced';
+            } else {
+                return 'unsynced';
+            }
+        } catch (error) {
+            console.error("Error reading tasks:", error);
+            return 'unsynced';
+        }
+
+    }
+
+    static async handleResetSync() {
+        try {
+            await AsyncStorage.setItem(SYNCED_ONCE, 'unsynced');
+            return true
+        } catch (error) {
+            console.error("Error reading tasks:", error);
+            return false
         }
 
     }

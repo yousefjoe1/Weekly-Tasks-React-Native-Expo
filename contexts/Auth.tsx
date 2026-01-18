@@ -1,4 +1,5 @@
 import { supabase } from '@/db/supabase'; // Ensure this points to your RN supabase client
+import { WeeklyTasksSync } from '@/featuers/weeklyTasks/services/weeklyTasksSyncService';
 import { User } from '@/types';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
@@ -44,6 +45,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }, []);
 
     const signOut = async () => {
+        const syncStop = await WeeklyTasksSync.handleResetSync()
         await supabase.auth.signOut();
     };
 

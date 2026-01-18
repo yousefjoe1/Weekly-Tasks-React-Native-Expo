@@ -9,7 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function HomeScreen() {
   const { updateBlock, deleteBlock } = useWeeklyTasks();
-  const { loading } = useTasksStore();
+  const { loading, loadingSync } = useTasksStore();
 
   const tasks = useTasksStore((state) => state.tasks)
 
@@ -21,6 +21,10 @@ export default function HomeScreen() {
       {/* Task List Logic */}
       <View style={styles.content}>
         {loading && <ActivityIndicator size="small" color="#3b82f6" />}
+        {loadingSync && <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+          <ActivityIndicator size="small" color="#3b82f6" />
+          <Text>Syncing</Text>
+        </View>}
         {tasks.length === 0 ? (
           <Text style={styles.emptyText}>No tasks found</Text>
         ) : (

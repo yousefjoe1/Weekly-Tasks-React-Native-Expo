@@ -1,6 +1,7 @@
 // services/weeklyTasksService.ts
 import { supabase } from '@/db/supabase';
 import { WeeklyTask } from '@/types';
+import { Result } from '../types/Resut';
 import { ApiErrorMessage } from '../types/taskTypes';
 import { shouldResetWeek } from '../utils/utils';
 import { LocalStorageStrategy } from './LocalStorageStrategy';
@@ -46,25 +47,33 @@ export class WeeklyTasksService {
     }
 
     // Add new task
-    static async addTask(task: WeeklyTask, userId: string | undefined): Promise<WeeklyTask> {
-        if (userId) {
-            const { id, ...insertData } = task
+    static async addTask(task: WeeklyTask, userId: string | undefined): Promise<Result<WeeklyTask>> {
+        try {
+            if (userId) {
+                const { id, ...insertData } = task;
+                const { data, error } = await supabase
+                    .from('weekly_tasks')
+                    .insert({ ...insertData, userId })
+                    .select().single();
 
-            const { data, error } = await supabase
-                .from('weekly_tasks')
-                .insert({ ...insertData, userId })
-                .select()
-                .single()
+                // if (error) throw new Error(error.message);
+                if (error) {
+                    return { success: false, error: error.message }
+                }
+                await LocalStorageStrategy.addBlock(data);
 
-            if (error) throw error
-
-            // Sync to localStorage as backup
-            await LocalStorageStrategy.addBlock(data)
-
-            return data
-        } else {
-            await LocalStorageStrategy.addBlock(task)
-            return task
+                return { success: true, data };
+            } else {
+                await LocalStorageStrategy.addBlock(task);
+                return { success: true, data: task };
+            }
+        } catch (error: any) {
+            // Here you can log to Sentry/LogRocket for senior-level observability
+            console.error("Service Error:", error);
+            return {
+                success: false,
+                error: error.message || 'An unexpected error occurred'
+            };
         }
     }
 
@@ -73,19 +82,26 @@ export class WeeklyTasksService {
         taskId: string,
         updates: Partial<WeeklyTask>,
         userId: string | undefined
-    ): Promise<void> {
-        if (userId) {
-            const { error } = await supabase
-                .from('weekly_tasks')
-                .update(updates)
-                .eq('id', taskId)
-                .eq('userId', 9)
+    ): Promise<Result<null>> {
+        try {
+            if (userId) {
+                const { error } = await supabase
+                    .from('weekly_tasks')
+                    .update(updates)
+                    .eq('id', taskId)
+                    .eq('userId', userId); // Fixed: was hardcoded to 9
+                console.log("🚀 ~ WeeklyTasksService ~ updateTask ~ error:", error)
 
-            if (error) throw error
+                if (error) {
+                    return { success: false, error: error.message }
+                }
+            }
+
+            await LocalStorageStrategy.updateBlock(taskId, updates);
+            return { success: true, data: null };
+        } catch (e: any) {
+            return { success: false, error: e.message }
         }
-
-        // Always sync to localStorage
-        LocalStorageStrategy.updateBlock(taskId, updates)
     }
 
     // Delete task
@@ -100,7 +116,7 @@ export class WeeklyTasksService {
             if (error) return { message: 'Error Deleting Task', code: 400, error }
         }
 
-        LocalStorageStrategy.deleteBlock(taskId)
+        await LocalStorageStrategy.deleteBlock(taskId)
         return { message: 'Task Deleted', code: 200 }
     }
 
@@ -159,14 +175,4 @@ export class WeeklyTasksService {
 
 
     }
-
-    // static async getSnapShotCloud(userId: string | undefined):Promise<void>{
-    //     if(userId){
-    //         const { data, error } = await supabase.from('weekly_snapshots')
-    //             .select('*')
-    //             .eq('userId', userId)
-    //         return data
-    //     }
-
-    // }
 }

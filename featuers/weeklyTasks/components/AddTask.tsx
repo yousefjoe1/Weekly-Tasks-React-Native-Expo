@@ -11,6 +11,7 @@ import {
     View
 } from 'react-native';
 import { WeeklyTasksService } from '../services/weeklyTasksService';
+import { useNotificationStore } from "../store/useNotificationStore";
 
 
 export function AddBlock() {
@@ -19,14 +20,15 @@ export function AddBlock() {
     const [loading, setLoading] = useState(false);
 
     const addTask = useTasksStore((state) => state.addTask)
+    const notify = useNotificationStore(state => state.notify);
 
 
     const addNewTask = async () => {
-        if (taskName.length < 3) {
-            // Use your toast here
-            alert('Task name must be at least 3 characters long');
-            return;
-        }
+        // if (taskName.length < 3) {
+        //     // Use your toast here
+        //     alert('Task name must be at least 3 characters long');
+        //     return;
+        // }
 
         setLoading(true);
 
@@ -39,13 +41,20 @@ export function AddBlock() {
             };
 
             // 2. Call Service (Direct Supabase call)
-            const savedTask = await WeeklyTasksService.addTask(newTaskObj, user?.id);
+            const result = await WeeklyTasksService.addTask(newTaskObj, user?.id);
+            if (result.success) {
+                setTaskName('');
+                notify('Task added successfully', 'success');
+                // 3. Update Parent UI state
+                addTask(result.data);
+            } else {
+                // The service already sanitized the error string
+                notify(result.error);
+            }
 
-            // 3. Update Parent UI state
-            addTask(savedTask);
 
             // 4. Reset local input
-            // setTaskName('');
+            setTaskName('');
         } catch (err) {
             console.error(err);
             alert('Failed to add task');
