@@ -59,15 +59,16 @@ export function useWeeklyTasks() {
   }
 
   const SyncFromLocalToCloud = async () => {
-    // const isSynced = await WeeklyTasksSync.handleSyncedOnce()
 
     if (user?.id) {
-      setLoadingSync(true)
-      await WeeklyTasksSync.addTheNewTasks(user?.id)
-      await WeeklyTasksSync.updateExistingTasks(user?.id)
-      await WeeklyTasksSync.deleteMissingTasks(user?.id)
-      await WeeklyTasksService.saveSnapShot(user?.id)
-      setLoadingSync(false)
+      const isSynced = await WeeklyTasksSync.handleSyncedOnce()
+      if (isSynced === 'no') {
+        setLoadingSync(true)
+        await WeeklyTasksSync.addTheNewTasks(user?.id)
+        await WeeklyTasksSync.updateExistingTasks(user?.id)
+        await WeeklyTasksSync.deleteMissingTasks(user?.id)
+        setLoadingSync(false)
+      }
     }
     getTasks()
     // dispatch(setSyncLoading(false))

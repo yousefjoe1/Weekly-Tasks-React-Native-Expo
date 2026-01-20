@@ -22,8 +22,8 @@ interface Message {
 
 export default function LoginForm() {
     const [loading, setLoading] = useState(false);
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    const [email, setEmail] = useState('yousefmahmoud150@gmail.com');
+    const [password, setPassword] = useState('12345678');
     const [isSignUp, setIsSignUp] = useState(false);
     const [message, setMessage] = useState<Message | null>(null);
 

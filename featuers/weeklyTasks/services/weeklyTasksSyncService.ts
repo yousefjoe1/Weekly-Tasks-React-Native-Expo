@@ -1,12 +1,24 @@
+import { supabase } from "@/db/supabase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { LocalStorageStrategy } from "./LocalStorageStrategy";
+import { LocalStorageStrategy, STORAGE_KEY } from "./LocalStorageStrategy";
 import { WeeklyTasksService } from "./weeklyTasksService";
 
 
 const SYNCED_ONCE = 'synced_once'
 
 export class WeeklyTasksSync {
-    // Change this in your WeeklyTasksSync class:
+    static async fetchSnapshot(userId: string | undefined) {
+        if (userId) {
+            const { data, error } = await supabase
+                .from('weekly_snapshots')
+                .select('*')
+                .eq('user_id', userId)
+            return data
+        } else {
+            return LocalStorageStrategy.getSnapshotData()
+        }
+    }
+
     static async addTheNewTasks(userId: string | undefined) {
         try {
             const localTasks = await LocalStorageStrategy.getWeeklyTasks();
@@ -56,28 +68,36 @@ export class WeeklyTasksSync {
 
     }
 
+
     static async handleSyncedOnce() {
         try {
             const syncedValue = await AsyncStorage.getItem(SYNCED_ONCE);
-            if (syncedValue === undefined) {
-                await AsyncStorage.setItem(SYNCED_ONCE, 'synced');
-                return 'synced';
+            console.log("🚀 ~ WeeklyTasksSync ~ handleSyncedOnce ~ syncedValue:", syncedValue)
+            if (syncedValue === undefined || syncedValue === null) {
+                await AsyncStorage.setItem(SYNCED_ONCE, 'yes');
+                return 'no';
             }
-            if (syncedValue === 'synced') {
-                return 'synced';
-            } else {
-                return 'unsynced';
+            if (syncedValue === 'no') {
+                await AsyncStorage.setItem(SYNCED_ONCE, 'yes');
+                return 'no'
             }
+
+            return syncedValue
         } catch (error) {
             console.error("Error reading tasks:", error);
-            return 'unsynced';
+            return 'no';
         }
 
     }
 
+    static async handleSynceToLocal(userId: string | undefined) {
+        const cloudTasks = await WeeklyTasksService.fetchTasks(userId)
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(cloudTasks))
+    }
+
     static async handleResetSync() {
         try {
-            await AsyncStorage.setItem(SYNCED_ONCE, 'unsynced');
+            await AsyncStorage.setItem(SYNCED_ONCE, 'no');
             return true
         } catch (error) {
             console.error("Error reading tasks:", error);

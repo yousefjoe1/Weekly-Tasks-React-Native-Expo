@@ -45,7 +45,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }, []);
 
     const signOut = async () => {
-        const syncStop = await WeeklyTasksSync.handleResetSync()
+        await WeeklyTasksSync.handleResetSync()
+        await WeeklyTasksSync.handleSynceToLocal(user?.id)
         await supabase.auth.signOut();
     };
 
