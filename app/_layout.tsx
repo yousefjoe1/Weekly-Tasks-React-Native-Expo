@@ -9,11 +9,11 @@ import { NotificationProvider } from '@/featuers/Notifications/NotificationProvi
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 
-import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
-import { useEffect, useState } from 'react';
-import { Platform, Text, TouchableOpacity } from 'react-native';
+import { useEffect } from 'react';
+import { Platform } from 'react-native';
+
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -29,34 +29,8 @@ Notifications.setNotificationHandler({
 });
 
 
-
-
-async function sendPushNotification(expoPushToken: string) {
-  const message = {
-    to: expoPushToken,
-    sound: 'default',
-    title: 'Original Title',
-    body: 'And here is the body!',
-    data: { someData: 'goes here' },
-  };
-
-  await fetch('https://exp.host/--/api/v2/push/send', {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Accept-encoding': 'gzip, deflate',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(message),
-  });
-}
-
-function handleRegistrationError(errorMessage: string) {
-  alert(errorMessage);
-  throw new Error(errorMessage);
-}
-
-async function registerForPushNotificationsAsync() {
+export async function registerForPushNotificationsAsync() {
+  // 1. إعداد القناة للأندرويد (ضروري جداً للإشعارات المحلية)
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('default', {
       name: 'default',
@@ -66,35 +40,27 @@ async function registerForPushNotificationsAsync() {
     });
   }
 
+  // 2. طلب التصريح من المستخدم (Permission Only)
   if (Device.isDevice) {
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
+
     if (existingStatus !== 'granted') {
       const { status } = await Notifications.requestPermissionsAsync();
       finalStatus = status;
     }
+
     if (finalStatus !== 'granted') {
-      handleRegistrationError('Permission not granted to get push token for push notification!');
-      return;
+      alert('لم يتم تفعيل صلاحية الإشعارات!');
+      return false;
     }
-    const projectId =
-      Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
-    if (!projectId) {
-      handleRegistrationError('Project ID not found');
-    }
-    try {
-      const pushTokenString = (
-        await Notifications.getExpoPushTokenAsync({
-          projectId,
-        })
-      ).data;
-      console.log(pushTokenString);
-      return pushTokenString;
-    } catch (e: unknown) {
-      handleRegistrationError(`${e}`);
-    }
+
+    // ملاحظة: قمنا بحذف كود getExpoPushTokenAsync نهائياً لمنع خطأ Firebase
+    console.log("✅ Permissions granted, skipping Firebase Token.");
+    return true;
   } else {
-    handleRegistrationError('Must use physical device for push notifications');
+    console.log('Must use physical device for full notification features');
+    return false;
   }
 }
 
@@ -102,22 +68,45 @@ async function registerForPushNotificationsAsync() {
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
-  const [expoPushToken, setExpoPushToken] = useState('');
-  const [notification, setNotification] = useState<Notifications.Notification | undefined>(
-    undefined
-  );
 
   useEffect(() => {
-    registerForPushNotificationsAsync()
-      .then(token => setExpoPushToken(token ?? ''))
-      .catch((error: any) => setExpoPushToken(`${error}`));
+    // 1. طلب الصلاحيات والتأكد منها
+    registerForPushNotificationsAsync();
 
+    // 2. دالة الجدولة الدورية (تذكير كل 15 دقيقة لمدة 12 ساعة)
+    async function setupReminders() {
+      // مسح القديم لتجنب التكرار عند كل مرة تفتح فيها التطبيق
+      await Notifications.cancelAllScheduledNotificationsAsync();
+
+      const fifteenMinutesInSeconds = 15 * 60;
+      const totalReminders = 48; // يغطي 12 ساعة (4 إشعارات في الساعة * 12)
+
+      for (let i = 1; i <= totalReminders; i++) {
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: "تذكير المهام 📝",
+            body: "هل تحققت من قائمتك الآن؟",
+            sound: true,
+            priority: Notifications.AndroidNotificationPriority.HIGH,
+          },
+          trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+            seconds: fifteenMinutesInSeconds * i,
+          },
+        });
+      }
+      console.log("✅ Done: 48 Notifications Scheduled");
+    }
+
+    setupReminders();
+
+    // 3. Listeners (اختياري لو عايز تعمل أكشن لما المستخدم يضغط على الإشعار)
     const notificationListener = Notifications.addNotificationReceivedListener(notification => {
-      setNotification(notification);
+      // console.log(notification);
     });
 
     const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
-      console.log(response);
+      // هنا ممكن توجه المستخدم لصفحة معينة لما يضغط على الإشعار
     });
 
     return () => {
@@ -126,27 +115,11 @@ export default function RootLayout() {
     };
   }, []);
 
-  const fireNotifications = () => {
-    Notifications.scheduleNotificationAsync({
-      content: {
-        title: 'Look at that notification',
-        body: "I'm so proud of myself!",
-      },
-      trigger: null,
-    });
-  }
-
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <AuthProvider>
         <Header />
         {/* <GestureHandlerRootView> */}
-
-        <TouchableOpacity onPress={fireNotifications}>
-
-          <Text>Fire Notification</Text>
-
-        </TouchableOpacity>
 
         {/* Renders on top of everything */}
         <NotificationProvider />
@@ -160,18 +133,3 @@ export default function RootLayout() {
     </ThemeProvider>
   );
 }
-
-async function schedulePushNotification() {
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title: "You've got mail! 📬",
-      body: 'Here is the notification body',
-      data: { data: 'goes here', test: { test1: 'more data' } },
-    },
-    trigger: {
-      type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-      seconds: 2,
-    },
-  });
-}
-
