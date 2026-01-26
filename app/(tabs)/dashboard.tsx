@@ -1,4 +1,5 @@
 import { useAuth } from '@/contexts/Auth';
+import NotificationSettings from '@/featuers/Notifications/NotificationSettings';
 import { WeeklyTasksSync } from '@/featuers/weeklyTasks/services/weeklyTasksSyncService';
 import { getWeekDates, getWeekDays } from '@/featuers/weeklyTasks/utils/utils';
 import { WeeklySnapshot } from '@/types';
@@ -37,6 +38,8 @@ const DashBoard = () => {
 
     return (
         <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+
+            <NotificationSettings />
             {loading && <ActivityIndicator size="large" color="#0000ff" style={styles.loader} />}
 
             {snapData && snapData.length === 0 && (
@@ -110,6 +113,8 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#fff',
+        // paddingTop: 30,
+        // marginTop: 50
     },
     contentContainer: {
         paddingTop: 60,
