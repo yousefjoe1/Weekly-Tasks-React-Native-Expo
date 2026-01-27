@@ -1,3 +1,8 @@
+# Welcome to your Weekly tasks app 👋
+- this app for weekly tasks to create and marke every day unitl next week.
+- every week days will reset and start another week days to mark but with the same tasks.
+- you will find a dashboard to see your history
+
 # Welcome to your Expo app 👋
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
