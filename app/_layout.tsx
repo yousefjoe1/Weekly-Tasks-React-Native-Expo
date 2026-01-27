@@ -7,27 +7,28 @@ import Header from '@/components/common/Header';
 import { AuthProvider } from '@/contexts/Auth';
 import { NotificationProvider } from '@/featuers/Notifications/NotificationProvider';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+// import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
-import * as Device from 'expo-device';
-import * as Notifications from 'expo-notifications';
-import { useEffect } from 'react';
-import { Platform } from 'react-native';
+// import AsmahAllah from '@/featuers/Notifications/sevices/azkar';
+// import * as Device from 'expo-device';
+// import * as Notifications from 'expo-notifications';
+// import { useEffect } from 'react';
+// import { Platform } from 'react-native';
 
 
 export const unstable_settings = {
   anchor: '(tabs)',
 };
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+// Notifications.setNotificationHandler({
+//   handleNotification: async () => ({
+//     shouldPlaySound: true,
+//     shouldSetBadge: true,
+//     shouldShowBanner: true,
+//     shouldShowList: true,
+//   }),
+// });
 
 
 // export async function registerForPushNotificationsAsync() {
@@ -67,72 +68,76 @@ Notifications.setNotificationHandler({
 
 
 
-const STORAGE_KEY = '@notification_interval';
+// const STORAGE_KEY = '@notification_interval';
 
-export async function registerForPushNotificationsAsync() {
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('default', {
-      name: 'default',
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#FF231F7C',
-    });
-  }
+// export async function registerForPushNotificationsAsync() {
+//   if (Platform.OS === 'android') {
+//     await Notifications.setNotificationChannelAsync('default', {
+//       name: 'default',
+//       importance: Notifications.AndroidImportance.MAX,
+//       vibrationPattern: [0, 250, 250, 250],
+//       lightColor: '#FF231F7C',
+//     });
+//   }
 
-  if (Device.isDevice) {
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
+//   if (Device.isDevice) {
+//     const { status: existingStatus } = await Notifications.getPermissionsAsync();
+//     let finalStatus = existingStatus;
 
-    if (existingStatus !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
-    }
+//     if (existingStatus !== 'granted') {
+//       const { status } = await Notifications.requestPermissionsAsync();
+//       finalStatus = status;
+//     }
 
-    if (finalStatus !== 'granted') {
-      alert('لم يتم تفعيل صلاحية الإشعارات!');
-      return false;
-    }
+//     if (finalStatus !== 'granted') {
+//       alert('لم يتم تفعيل صلاحية الإشعارات!');
+//       return false;
+//     }
 
-    console.log("✅ Permissions granted");
-    return true;
-  } else {
-    console.log('Must use physical device for full notification features');
-    return false;
-  }
-}
+//     console.log("✅ Permissions granted");
+//     return true;
+//   } else {
+//     console.log('Must use physical device for full notification features');
+//     return false;
+//   }
+// }
 
-async function scheduleNotificationsFromStorage() {
-  try {
-    const savedInterval = await AsyncStorage.getItem(STORAGE_KEY);
+// async function scheduleNotificationsFromStorage() {
+//   try {
+//     const savedInterval = await AsyncStorage.getItem(STORAGE_KEY);
 
-    if (savedInterval) {
-      const intervalHours = parseInt(savedInterval);
-      const intervalInSeconds = intervalHours * 60 * 60;
+//     if (savedInterval) {
+//       const intervalHours = parseInt(savedInterval);
+//       const intervalInSeconds = intervalHours * 60 * 60;
 
-      // إلغاء القديم
-      await Notifications.cancelAllScheduledNotificationsAsync();
+//       // إلغاء القديم
+//       await Notifications.cancelAllScheduledNotificationsAsync();
 
-      // ✅ إشعار واحد متكرر فقط!
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: "تذكير المهام 📝",
-          body: "هل تحققت من قائمتك الآن؟",
-          sound: true,
-          priority: Notifications.AndroidNotificationPriority.HIGH,
-        },
-        trigger: {
-          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-          seconds: intervalInSeconds,
-          repeats: true, // ✅ يتكرر للأبد بدون حدود
-        },
-      });
+//       const item = await AsmahAllah.startNotification();
 
-      console.log(`✅ Repeating notification rescheduled (every ${intervalHours} hours)`);
-    }
-  } catch (error) {
-    console.error('Error scheduling notifications:', error);
-  }
-}
+
+//       // ✅ إشعار واحد متكرر فقط!
+//       await Notifications.scheduleNotificationAsync({
+//         content: {
+//           title: `﴿ ${item.name} ﴾`, // العنوان Bold تلقائياً
+//           body: item.details,
+//           sound: true,
+//           priority: Notifications.AndroidNotificationPriority.HIGH,
+//         },
+//         trigger: {
+//           type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+//           seconds: intervalInSeconds,
+//           repeats: true, // ✅ يتكرر للأبد بدون حدود
+//         },
+//       });
+//       await AsmahAllah.updateNotificationIndex();
+
+//       console.log(`✅ Repeating notification rescheduled (every ${intervalHours} hours)`);
+//     }
+//   } catch (error) {
+//     console.error('Error scheduling notifications:', error);
+//   }
+// }
 
 
 
@@ -186,27 +191,27 @@ export default function RootLayout() {
   //   };
   // }, []);
 
-  useEffect(() => {
-    const setup = async () => {
-      await registerForPushNotificationsAsync();
-      await scheduleNotificationsFromStorage();
-    };
+  // useEffect(() => {
+  //   const setup = async () => {
+  //     await registerForPushNotificationsAsync();
+  //     await scheduleNotificationsFromStorage();
+  //   };
 
-    setup();
+  //   setup();
 
-    const notificationListener = Notifications.addNotificationReceivedListener(notification => {
-      // يمكنك التعامل مع الإشعار هنا
-    });
+  //   const notificationListener = Notifications.addNotificationReceivedListener(notification => {
+  //     // يمكنك التعامل مع الإشعار هنا
+  //   });
 
-    const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
-      // يمكنك التنقل لصفحة معينة هنا
-    });
+  //   const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
+  //     // يمكنك التنقل لصفحة معينة هنا
+  //   });
 
-    return () => {
-      notificationListener.remove();
-      responseListener.remove();
-    };
-  }, []);
+  //   return () => {
+  //     notificationListener.remove();
+  //     responseListener.remove();
+  //   };
+  // }, []);
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>

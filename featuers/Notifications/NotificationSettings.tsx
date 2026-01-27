@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import AsmahAllah from './sevices/azkar';
 
 const STORAGE_KEY = '@notification_interval';
 
@@ -60,11 +61,13 @@ export default function NotificationSettings() {
 
         const intervalInSeconds = intervalHours * 60 * 60;
 
+        const item = await AsmahAllah.startNotification();
+
         // ✅ الحل: استخدام إشعار واحد متكرر بدلاً من مئات الإشعارات!
         await Notifications.scheduleNotificationAsync({
             content: {
-                title: "تذكير المهام 📝",
-                body: "هل تحققت من قائمتك الآن؟",
+                title: `﴿ ${item.name} ﴾`, // العنوان Bold تلقائياً
+                body: item.details,
                 sound: true,
                 priority: Notifications.AndroidNotificationPriority.HIGH,
             },
@@ -74,6 +77,7 @@ export default function NotificationSettings() {
                 repeats: true, // ✅ المفتاح السحري: repeats: true
             },
         });
+        await AsmahAllah.updateNotificationIndex();
         setLoading(false);
         console.log(`✅ Repeating notification scheduled (every ${intervalHours} hours)`);
     };
@@ -92,6 +96,27 @@ export default function NotificationSettings() {
             setLoading(false)
         }
     };
+
+    // const test = async () => {
+    //     const item = await AsmahAllah.startNotification();
+
+    //     // ✅ الحل: استخدام إشعار واحد متكرر بدلاً من مئات الإشعارات!
+    //     await Notifications.scheduleNotificationAsync({
+    //         content: {
+    //             title: `﴿ ${item.name} ﴾`, // العنوان Bold تلقائياً
+    //             body: item.details,
+    //             sound: true,
+    //             priority: Notifications.AndroidNotificationPriority.HIGH,
+    //         },
+    //         trigger: null
+    //     });
+    //     await AsmahAllah.updateNotificationIndex();
+    //     setLoading(false);
+    // }
+    // useEffect(() => {
+    //     test()
+    // }, [])
+
 
     return (
         <View style={styles.container}>

@@ -5,13 +5,13 @@ export interface WeeklyTask {
         [key: string]: boolean;
     };
     created_at?: string;
-    updated_at?: string;
+    updated_at?: Date;
 }
 
 
 export interface WeeklySnapshot {
-    id: string;
-    created_at: string;
+    id?: string;
+    created_at?: string;
     week_start: string;
     week_end: string;
     user_id: string | undefined;
