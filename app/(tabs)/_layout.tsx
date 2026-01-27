@@ -28,7 +28,7 @@ export default function TabLayout() {
           height: 50,
           marginHorizontal: 10,
           borderRadius: 50,
-          marginBottom: 5
+          marginBottom: 20
         },
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
